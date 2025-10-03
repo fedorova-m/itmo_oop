@@ -13,7 +13,7 @@ namespace Main
                 .AddJsonFile("products.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            var adminPassword = configuration["AdminPassword"] ?? "ab0ba";
+            var adminPassword = configuration["AdminPassword"] ?? "oop";
 
             var products = new List<Product>();
             var productsSection = configuration.GetSection("Products");
