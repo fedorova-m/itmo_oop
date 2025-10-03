@@ -1,0 +1,4 @@
+bin/
+obj/
+homework.csproj
+.DS_Store
