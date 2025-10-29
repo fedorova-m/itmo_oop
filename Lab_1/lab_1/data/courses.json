@@ -1,0 +1,46 @@
+{
+  "Courses": [
+    {
+      "Id": 1,
+      "Name": "Programming Fundamentals",
+      "Description": "Introduction to programming concepts",
+      "Type": "Online",
+      "TeacherId": 1,
+      "MaxStudents": 30,
+      "Platform": "Zoom",
+      "Students": [101, 102, 103]
+    },
+    {
+      "Id": 2,
+      "Name": "Data Structures",
+      "Description": "Advanced data structures and algorithms",
+      "Type": "Offline",
+      "TeacherId": 2,
+      "MaxStudents": 25,
+      "Room": "1101",
+      "Schedule": "Mon, Wed, Fri 10:00-11:30",
+      "Students": [104, 105, 106, 107]
+    },
+    {
+      "Id": 3,
+      "Name": "Web Development",
+      "Description": "Modern web development technologies",
+      "Type": "Online",
+      "TeacherId": 1,
+      "MaxStudents": 40,
+      "Platform": "Zoom",
+      "Students": [108, 109, 110, 111, 112]
+    },
+    {
+      "Id": 4,
+      "Name": "Database Systems",
+      "Description": "Database design and management",
+      "Type": "Offline",
+      "TeacherId": 3,
+      "MaxStudents": 20,
+      "Room": "1205",
+      "Schedule": "Tue, Thu 14:00-15:30",
+      "Students": [113, 114, 115]
+    }
+  ]
+}

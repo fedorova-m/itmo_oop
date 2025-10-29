@@ -1,0 +1,109 @@
+{
+  "Students": [
+    {
+      "Id": 101,
+      "Name": "Anna Smirnova",
+      "Email": "asmirnova@student.itmo.ru",
+      "Year": 2,
+      "Major": "Computer Science"
+    },
+    {
+      "Id": 102,
+      "Name": "Dmitry Petrov",
+      "Email": "dpetrov@student.itmo.ru",
+      "Year": 1,
+      "Major": "Software Engineering"
+    },
+    {
+      "Id": 103,
+      "Name": "Elena Kozlova",
+      "Email": "ekozlova@student.itmo.ru",
+      "Year": 3,
+      "Major": "Computer Science"
+    },
+    {
+      "Id": 104,
+      "Name": "Maxim Volkov",
+      "Email": "mvolkov@student.itmo.ru",
+      "Year": 2,
+      "Major": "Information Systems"
+    },
+    {
+      "Id": 105,
+      "Name": "Olga Sidorova",
+      "Email": "osidorova@student.itmo.ru",
+      "Year": 1,
+      "Major": "Computer Science"
+    },
+    {
+      "Id": 106,
+      "Name": "Pavel Ivanov",
+      "Email": "pivanov@student.itmo.ru",
+      "Year": 3,
+      "Major": "Software Engineering"
+    },
+    {
+      "Id": 107,
+      "Name": "Sofia Morozova",
+      "Email": "smorozova@student.itmo.ru",
+      "Year": 2,
+      "Major": "Information Systems"
+    },
+    {
+      "Id": 108,
+      "Name": "Alexey Novikov",
+      "Email": "anovikov@student.itmo.ru",
+      "Year": 1,
+      "Major": "Computer Science"
+    },
+    {
+      "Id": 109,
+      "Name": "Maria Fedorova",
+      "Email": "mfedorova@student.itmo.ru",
+      "Year": 3,
+      "Major": "Software Engineering"
+    },
+    {
+      "Id": 110,
+      "Name": "Nikita Popov",
+      "Email": "npopov@student.itmo.ru",
+      "Year": 2,
+      "Major": "Computer Science"
+    },
+    {
+      "Id": 111,
+      "Name": "Victoria Kuznetsova",
+      "Email": "vkuznetsova@student.itmo.ru",
+      "Year": 1,
+      "Major": "Information Systems"
+    },
+    {
+      "Id": 112,
+      "Name": "Artem Sokolov",
+      "Email": "asokolov@student.itmo.ru",
+      "Year": 3,
+      "Major": "Computer Science"
+    },
+    {
+      "Id": 113,
+      "Name": "Daria Lebedeva",
+      "Email": "dlebedeva@student.itmo.ru",
+      "Year": 2,
+      "Major": "Software Engineering"
+    },
+    {
+      "Id": 114,
+      "Name": "Igor Orlov",
+      "Email": "iorlov@student.itmo.ru",
+      "Year": 1,
+      "Major": "Information Systems"
+    },
+    {
+      "Id": 115,
+      "Name": "Natalia Zaitseva",
+      "Email": "nzaitseva@student.itmo.ru",
+      "Year": 3,
+      "Major": "Computer Science"
+    }
+  ]
+}
