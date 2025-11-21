@@ -1,5 +1,5 @@
 ﻿using VendingMachine.Core;
-using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace Main
 {
@@ -7,32 +7,53 @@ namespace Main
     {
         private static void Main()
         {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile("products.json", optional: false, reloadOnChange: true)
-                .Build();
-
-            var adminPassword = configuration["AdminPassword"] ?? "oop";
-
-            var products = new List<Product>();
-            var productsSection = configuration.GetSection("Products");
-            foreach (var productSection in productsSection.GetChildren())
+            string adminPassword = "oop";
+            try
             {
-                var id = int.Parse(productSection["Id"] ?? "0");
-                var name = productSection["Name"] ?? "";
-                var priceKop = int.Parse(productSection["PriceKop"] ?? "0");
-                var quantity = int.Parse(productSection["Quantity"] ?? "0");
-                products.Add(new Product(id, name, priceKop, quantity));
+                string appsettingsText = File.ReadAllText("appsettings.json");
+                var appsettings = JsonSerializer.Deserialize<Dictionary<string, string>>(appsettingsText);
+                if (appsettings != null && appsettings.ContainsKey("AdminPassword"))
+                {
+                    adminPassword = appsettings["AdminPassword"];
+                }
+            }
+            catch
+            {
+
             }
 
-            var machineWallet = new Wallet(new Dictionary<int, int>
+            var products = new List<Product>();
+            try
             {
-                [100] = 10,
-                [50] = 10,
-                [20] = 10,
-                [10] = 10
-            });
+                string productsText = File.ReadAllText("products.json");
+                var productsData = JsonSerializer.Deserialize<ProductsData>(productsText);
+                if (productsData != null && productsData.Products != null)
+                {
+                    foreach (var productData in productsData.Products)
+                    {
+                        Product product = new Product(
+                            productData.Id,
+                            productData.Name,
+                            productData.PriceKop,
+                            productData.Quantity
+                        );
+                        products.Add(product);
+                    }
+                }
+            }
+            catch
+            {
+                products.Add(new Product(1, "Water", 200, 5));
+                products.Add(new Product(2, "Soda", 300, 5));
+                products.Add(new Product(3, "Juice", 300, 5));
+            }
+
+            var initialCoins = new Dictionary<int, int>();
+            initialCoins[100] = 10;
+            initialCoins[50] = 10;
+            initialCoins[20] = 10;
+            initialCoins[10] = 10;
+            var machineWallet = new Wallet(initialCoins);
 
             var vm = new VendingMachine.Core.VendingMachine(products, machineWallet, adminPassword: adminPassword);
 
@@ -99,8 +120,7 @@ namespace Main
         {
             Console.Write("Enter coin (1 / 0.5 / 0.2 / 0.1): ");
             var s = Console.ReadLine()?.Trim().Replace(',', '.');
-            if (!double.TryParse(s, System.Globalization.NumberStyles.Any,
-                                 System.Globalization.CultureInfo.InvariantCulture, out var rub))
+            if (s == null || !double.TryParse(s, out var rub))
             {
                 Console.WriteLine("Invalid input.");
                 return;
@@ -131,7 +151,11 @@ namespace Main
         {
             Console.Write("Password: ");
             var pwd = Console.ReadLine();
-            if (!vm.TryEnterAdmin(pwd ?? string.Empty))
+            if (pwd == null)
+            {
+                pwd = "";
+            }
+            if (!vm.TryEnterAdmin(pwd))
             {
                 Console.WriteLine("Access denied.");
                 return;
@@ -170,8 +194,7 @@ namespace Main
                     case "2":
                         Console.Write("Coin (1 / 0.5 / 0.2 / 0.1): ");
                         var s = Console.ReadLine()?.Trim().Replace(',', '.');
-                        if (!double.TryParse(s, System.Globalization.NumberStyles.Any,
-                                             System.Globalization.CultureInfo.InvariantCulture, out var rub))
+                        if (s == null || !double.TryParse(s, out var rub))
                         {
                             Console.WriteLine("Invalid.");
                             break;
@@ -197,7 +220,26 @@ namespace Main
                         Console.WriteLine("Unknown option.");
                         break;
                 }
+
             }
         }
+    }
+
+    internal class ProductsData
+    {
+        public List<ProductData>? Products { get; set; }
+    }
+
+    internal class ProductData
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public int PriceKop { get; set; }
+        public int Quantity { get; set; }
+    }
+
+    internal class AppSettings
+    {
+        public string? AdminPassword { get; set; }
     }
 }
