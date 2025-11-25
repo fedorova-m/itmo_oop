@@ -1,5 +1,5 @@
 using CourseManagement.Core;
-using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace Main
 {
@@ -7,72 +7,108 @@ namespace Main
     {
         private static void Main()
         {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("data/appsettings.json", optional: false, reloadOnChange: true)
-                .AddJsonFile("data/courses.json", optional: false, reloadOnChange: true)
-                .AddJsonFile("data/teachers.json", optional: false, reloadOnChange: true)
-                .AddJsonFile("data/students.json", optional: false, reloadOnChange: true)
-                .Build();
-
-            var systemName = configuration["SystemName"] ?? "Course Management System";
-
-            // Загружаем преподавателей
+            string systemName = "ITMO Course Management System";
+            
             var teachers = new List<Teacher>();
-            var teachersSection = configuration.GetSection("Teachers");
-            foreach (var teacherSection in teachersSection.GetChildren())
+            try
             {
-                var id = int.Parse(teacherSection["Id"] ?? "0");
-                var name = teacherSection["Name"] ?? "";
-                var email = teacherSection["Email"] ?? "";
-                var department = teacherSection["Department"] ?? "";
-                var specialization = teacherSection["Specialization"] ?? "";
-                teachers.Add(new Teacher(id, name, email, department, specialization));
-            }
-
-            // Загружаем студентов
-            var students = new List<Student>();
-            var studentsSection = configuration.GetSection("Students");
-            foreach (var studentSection in studentsSection.GetChildren())
-            {
-                var id = int.Parse(studentSection["Id"] ?? "0");
-                var name = studentSection["Name"] ?? "";
-                var email = studentSection["Email"] ?? "";
-                var year = int.Parse(studentSection["Year"] ?? "0");
-                var major = studentSection["Major"] ?? "";
-                students.Add(new Student(id, name, email, year, major));
-            }
-
-            // Загружаем курсы
-            var courses = new List<Course>();
-            var coursesSection = configuration.GetSection("Courses");
-            foreach (var courseSection in coursesSection.GetChildren())
-            {
-                var id = int.Parse(courseSection["Id"] ?? "0");
-                var name = courseSection["Name"] ?? "";
-                var description = courseSection["Description"] ?? "";
-                var type = courseSection["Type"] ?? "";
-                var teacherId = int.Parse(courseSection["TeacherId"] ?? "0");
-                var maxStudents = int.Parse(courseSection["MaxStudents"] ?? "0");
-
-                Course course = type.ToLower() switch
+                string teachersText = File.ReadAllText("data/teachers.json");
+                var teachersData = JsonSerializer.Deserialize<TeachersData>(teachersText);
+                if (teachersData != null && teachersData.Teachers != null)
                 {
-                    "online" => new OnlineCourse(id, name, description, teacherId, maxStudents, courseSection["Platform"] ?? ""),
-                    "offline" => new OfflineCourse(id, name, description, teacherId, maxStudents, courseSection["Room"] ?? "", courseSection["Schedule"] ?? ""),
-                    _ => throw new ArgumentException($"Unknown course type: {type}")
-                };
-
-                // Загружаем студентов курса
-                var courseStudentsSection = courseSection.GetSection("Students");
-                foreach (var studentId in courseStudentsSection.GetChildren())
-                {
-                    if (int.TryParse(studentId.Value, out var studentIdInt))
+                    foreach (var teacherData in teachersData.Teachers)
                     {
-                        course.EnrollStudent(studentIdInt);
+                        Teacher teacher = new Teacher(
+                            teacherData.Id,
+                            teacherData.Name,
+                            teacherData.Email,
+                            teacherData.Department,
+                            teacherData.Specialization
+                        );
+                        teachers.Add(teacher);
                     }
                 }
+            }
+            catch
+            {
+            }
 
-                courses.Add(course);
+            var students = new List<Student>();
+            try
+            {
+                string studentsText = File.ReadAllText("data/students.json");
+                var studentsData = JsonSerializer.Deserialize<StudentsData>(studentsText);
+                if (studentsData != null && studentsData.Students != null)
+                {
+                    foreach (var studentData in studentsData.Students)
+                    {
+                        Student student = new Student(
+                            studentData.Id,
+                            studentData.Name,
+                            studentData.Email,
+                            studentData.Year,
+                            studentData.Major
+                        );
+                        students.Add(student);
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            var courses = new List<Course>();
+            try
+            {
+                string coursesText = File.ReadAllText("data/courses.json");
+                var coursesData = JsonSerializer.Deserialize<CoursesData>(coursesText);
+                if (coursesData != null && coursesData.Courses != null)
+                {
+                    foreach (var courseData in coursesData.Courses)
+                    {
+                        Course course;
+                        if (courseData.Type.ToLower() == "online")
+                        {
+                            course = new OnlineCourse(
+                                courseData.Id,
+                                courseData.Name,
+                                courseData.Description,
+                                courseData.TeacherId,
+                                courseData.MaxStudents,
+                                courseData.Platform ?? ""
+                            );
+                        }
+                        else if (courseData.Type.ToLower() == "offline")
+                        {
+                            course = new OfflineCourse(
+                                courseData.Id,
+                                courseData.Name,
+                                courseData.Description,
+                                courseData.TeacherId,
+                                courseData.MaxStudents,
+                                courseData.Room ?? "",
+                                courseData.Schedule ?? ""
+                            );
+                        }
+                        else
+                        {
+                            continue;
+                        }
+
+                        if (courseData.Students != null)
+                        {
+                            foreach (var studentId in courseData.Students)
+                            {
+                                course.EnrollStudent(studentId);
+                            }
+                        }
+
+                        courses.Add(course);
+                    }
+                }
+            }
+            catch
+            {
             }
 
             var courseManager = new CourseManager(courses, teachers, students);
@@ -150,7 +186,7 @@ namespace Main
         {
             Console.WriteLine("-- All Courses --");
             var courses = courseManager.GetAllCourses();
-            if (!courses.Any())
+            if (courses.Count == 0)
             {
                 Console.WriteLine("No courses available.");
                 return;
@@ -159,7 +195,8 @@ namespace Main
             foreach (var course in courses)
             {
                 var teacher = courseManager.GetTeacher(course.TeacherId);
-                Console.WriteLine($"{course.Id}. {course.Name} | Teacher: {teacher?.Name ?? "Unknown"} | Students: {course.Students.Count}/{course.MaxStudents}");
+                string teacherName = teacher != null ? teacher.Name : "Unknown";
+                Console.WriteLine($"{course.Id}. {course.Name} | Teacher: {teacherName} | Students: {course.Students.Count}/{course.MaxStudents}");
             }
         }
 
@@ -167,7 +204,7 @@ namespace Main
         {
             Console.WriteLine("-- All Teachers --");
             var teachers = courseManager.GetAllTeachers();
-            if (!teachers.Any())
+            if (teachers.Count == 0)
             {
                 Console.WriteLine("No teachers available.");
                 return;
@@ -175,7 +212,8 @@ namespace Main
 
             foreach (var teacher in teachers)
             {
-                var courseCount = courseManager.GetCoursesByTeacher(teacher.Id).Count();
+                var courses = courseManager.GetCoursesByTeacher(teacher.Id);
+                int courseCount = courses.Count;
                 Console.WriteLine($"{teacher.Id}. {teacher} | Courses: {courseCount}");
             }
         }
@@ -184,7 +222,7 @@ namespace Main
         {
             Console.WriteLine("-- All Students --");
             var students = courseManager.GetAllStudents();
-            if (!students.Any())
+            if (students.Count == 0)
             {
                 Console.WriteLine("No students available.");
                 return;
@@ -214,7 +252,7 @@ namespace Main
 
             Console.WriteLine($"-- Courses taught by {teacher.Name} --");
             var courses = courseManager.GetCoursesByTeacher(teacherId);
-            if (!courses.Any())
+            if (courses.Count == 0)
             {
                 Console.WriteLine("No courses found for this teacher.");
                 return;
@@ -433,10 +471,57 @@ namespace Main
             var teacher = courseManager.GetTeacher(course.TeacherId);
             Console.WriteLine($"-- Course Details --");
             Console.WriteLine(course.GetCourseDetails());
-            Console.WriteLine($"Teacher: {teacher?.Name ?? "Unknown"}");
+            string teacherName = teacher != null ? teacher.Name : "Unknown";
+            Console.WriteLine($"Teacher: {teacherName}");
             Console.WriteLine($"Location: {course.GetLocationInfo()}");
             Console.WriteLine($"Enrolled Students: {string.Join(", ", course.Students)}");
         }
+    }
 
+    internal class TeachersData
+    {
+        public List<TeacherData>? Teachers { get; set; }
+    }
+
+    internal class TeacherData
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Department { get; set; } = "";
+        public string Specialization { get; set; } = "";
+    }
+
+    internal class StudentsData
+    {
+        public List<StudentData>? Students { get; set; }
+    }
+
+    internal class StudentData
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public int Year { get; set; }
+        public string Major { get; set; } = "";
+    }
+
+    internal class CoursesData
+    {
+        public List<CourseData>? Courses { get; set; }
+    }
+
+    internal class CourseData
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Type { get; set; } = "";
+        public int TeacherId { get; set; }
+        public int MaxStudents { get; set; }
+        public string? Platform { get; set; }
+        public string? Room { get; set; }
+        public string? Schedule { get; set; }
+        public List<int>? Students { get; set; }
     }
 }

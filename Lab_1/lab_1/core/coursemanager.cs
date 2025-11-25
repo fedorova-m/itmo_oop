@@ -6,14 +6,7 @@ namespace CourseManagement.Core
         private readonly List<Teacher> _teachers;
         private readonly List<Student> _students;
 
-        public CourseManager()
-        {
-            _courses = new List<Course>();
-            _teachers = new List<Teacher>();
-            _students = new List<Student>();
-        }
-
-        public CourseManager(List<Course> courses, List<Teacher> teachers, List<Student> students)
+        public CourseManager(List<Course>? courses = null, List<Teacher>? teachers = null, List<Student>? students = null)
         {
             _courses = courses ?? new List<Course>();
             _teachers = teachers ?? new List<Teacher>();
@@ -22,8 +15,15 @@ namespace CourseManagement.Core
 
         public bool AddCourse(Course course)
         {
-            if (course == null || _courses.Any(c => c.Id == course.Id))
+            if (course == null)
+            {
                 return false;
+            }
+
+            if (GetCourse(course.Id) != null)
+            {
+                return false;
+            }
 
             _courses.Add(course);
             return true;
@@ -31,9 +31,11 @@ namespace CourseManagement.Core
 
         public bool RemoveCourse(int courseId)
         {
-            var course = _courses.FirstOrDefault(c => c.Id == courseId);
+            var course = GetCourse(courseId);
             if (course == null)
+            {
                 return false;
+            }
 
             _courses.Remove(course);
             return true;
@@ -41,37 +43,52 @@ namespace CourseManagement.Core
 
         public Course? GetCourse(int courseId)
         {
-            return _courses.FirstOrDefault(c => c.Id == courseId);
+            for (int i = 0; i < _courses.Count; i++)
+            {
+                if (_courses[i].Id == courseId)
+                {
+                    return _courses[i];
+                }
+            }
+            return null;
         }
 
-        public IEnumerable<Course> GetAllCourses()
+        public List<Course> GetAllCourses()
         {
-            return _courses.AsReadOnly();
+            List<Course> result = new List<Course>();
+            for (int i = 0; i < _courses.Count; i++)
+            {
+                result.Add(_courses[i]);
+            }
+            return result;
         }
 
-        public IEnumerable<Course> GetCoursesByTeacher(int teacherId)
+        public List<Course> GetCoursesByTeacher(int teacherId)
         {
-            return _courses.Where(c => c.TeacherId == teacherId);
-        }
-
-        public bool AssignTeacherToCourse(int courseId, int teacherId)
-        {
-            var course = GetCourse(courseId);
-            if (course == null || !_teachers.Any(t => t.Id == teacherId))
-                return false;
-
-            // В реальной системе здесь была бы логика обновления TeacherId
-            // Для простоты мы предполагаем, что курсы создаются с правильным TeacherId
-            return true;
+            List<Course> result = new List<Course>();
+            for (int i = 0; i < _courses.Count; i++)
+            {
+                if (_courses[i].TeacherId == teacherId)
+                {
+                    result.Add(_courses[i]);
+                }
+            }
+            return result;
         }
 
         public bool EnrollStudentInCourse(int courseId, int studentId)
         {
             var course = GetCourse(courseId);
-            var student = GetStudent(studentId);
-            
-            if (course == null || student == null)
+            if (course == null)
+            {
                 return false;
+            }
+
+            var student = GetStudent(studentId);
+            if (student == null)
+            {
+                return false;
+            }
                 
             return course.EnrollStudent(studentId);
         }
@@ -79,13 +96,27 @@ namespace CourseManagement.Core
         public bool UnenrollStudentFromCourse(int courseId, int studentId)
         {
             var course = GetCourse(courseId);
-            return course?.UnenrollStudent(studentId) ?? false;
+            if (course == null)
+            {
+                return false;
+            }
+            return course.UnenrollStudent(studentId);
         }
 
         public bool AddTeacher(Teacher teacher)
         {
-            if (teacher == null || _teachers.Any(t => t.Id == teacher.Id))
+            if (teacher == null)
+            {
                 return false;
+            }
+
+            for (int i = 0; i < _teachers.Count; i++)
+            {
+                if (_teachers[i].Id == teacher.Id)
+                {
+                    return false;
+                }
+            }
 
             _teachers.Add(teacher);
             return true;
@@ -93,18 +124,40 @@ namespace CourseManagement.Core
 
         public Teacher? GetTeacher(int teacherId)
         {
-            return _teachers.FirstOrDefault(t => t.Id == teacherId);
+            for (int i = 0; i < _teachers.Count; i++)
+            {
+                if (_teachers[i].Id == teacherId)
+                {
+                    return _teachers[i];
+                }
+            }
+            return null;
         }
 
-        public IEnumerable<Teacher> GetAllTeachers()
+        public List<Teacher> GetAllTeachers()
         {
-            return _teachers.AsReadOnly();
+            List<Teacher> result = new List<Teacher>();
+            for (int i = 0; i < _teachers.Count; i++)
+            {
+                result.Add(_teachers[i]);
+            }
+            return result;
         }
 
         public bool AddStudent(Student student)
         {
-            if (student == null || _students.Any(s => s.Id == student.Id))
+            if (student == null)
+            {
                 return false;
+            }
+
+            for (int i = 0; i < _students.Count; i++)
+            {
+                if (_students[i].Id == student.Id)
+                {
+                    return false;
+                }
+            }
 
             _students.Add(student);
             return true;
@@ -112,17 +165,29 @@ namespace CourseManagement.Core
 
         public Student? GetStudent(int studentId)
         {
-            return _students.FirstOrDefault(s => s.Id == studentId);
+            for (int i = 0; i < _students.Count; i++)
+            {
+                if (_students[i].Id == studentId)
+                {
+                    return _students[i];
+                }
+            }
+            return null;
         }
 
-        public IEnumerable<Student> GetAllStudents()
+        public List<Student> GetAllStudents()
         {
-            return _students.AsReadOnly();
+            List<Student> result = new List<Student>();
+            for (int i = 0; i < _students.Count; i++)
+            {
+                result.Add(_students[i]);
+            }
+            return result;
         }
 
         public bool StudentExists(int studentId)
         {
-            return _students.Any(s => s.Id == studentId);
+            return GetStudent(studentId) != null;
         }
     }
 }
