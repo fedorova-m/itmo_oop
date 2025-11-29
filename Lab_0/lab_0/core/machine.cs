@@ -1,111 +1,182 @@
 namespace VendingMachine.Core
 {
-    public sealed class VendingMachine
+    public class VendingMachine
     {
-        private readonly List<Product> _products;
-        private readonly Wallet _machineWallet;
-        private readonly Wallet _sessionWallet;
-        private readonly string _adminPassword;
+        private List<Product> products;
+        private Wallet machineWallet;
+        private Wallet sessionWallet;
+        private string adminPassword;
 
         public VendingMachine(List<Product> products, Wallet machineWallet, string adminPassword)
         {
-            _products = products;
-            _machineWallet = machineWallet;
-            _sessionWallet = new Wallet();
-            _adminPassword = adminPassword;
+            this.products = products;
+            this.machineWallet = machineWallet;
+            this.sessionWallet = new Wallet();
+            this.adminPassword = adminPassword;
         }
 
-        public IReadOnlyList<Product> Products => _products;
-        public int CurrentBalanceKop => _sessionWallet.TotalKop();
+        public List<Product> Products => products;
+        public int CurrentBalanceKop => sessionWallet.TotalKop();
 
         public bool InsertCoin(int denomKop)
         {
-            if (!Money.IsSupportedCoin(denomKop)) return false;
-            _sessionWallet.Add(denomKop);
+            if (!Money.IsSupportedCoin(denomKop))
+                return false;
+
+            sessionWallet.Add(denomKop);
             return true;
         }
 
         public (bool ok, string message) Purchase(int productId)
         {
-            var product = _products.FirstOrDefault(p => p.Id == productId);
-            if (product == null) return (false, "Product not found");
-            if (!product.HasStock) return (false, "Out of stock");
-            if (CurrentBalanceKop < product.PriceKop) return (false, "Insufficient balance");
+            Product? product = null;
+            foreach (var p in products)
+            {
+                if (p.Id == productId)
+                {
+                    product = p;
+                    break;
+                }
+            }
 
-            foreach (var kv in _sessionWallet.Snapshot())
-                _machineWallet.Add(kv.Key, kv.Value);
+            if (product == null)
+                return (false, "Товар не найден");
+
+            if (product.Quantity <= 0)
+                return (false, "Товар закончился");
+
+            if (CurrentBalanceKop < product.PriceKop)
+                return (false, "Недостаточно средств");
+
+            var sessionCoins = sessionWallet.Snapshot();
+            foreach (var coin in sessionCoins)
+            {
+                if (coin.Value > 0)
+                {
+                    machineWallet.Add(coin.Key, coin.Value);
+                }
+            }
 
             var changeKop = CurrentBalanceKop - product.PriceKop;
-            if (!Calc.TryMakeChange(changeKop, _machineWallet, out var change))
+            Dictionary<int, int> change = new Dictionary<int, int>();
+
+            if (changeKop > 0)
             {
-                foreach (var kv in _sessionWallet.Snapshot())
-                    _machineWallet.TryRemove(kv.Key, kv.Value);
-                return (false, "Cannot make change for this transaction");
+                if (!Calc.TryMakeChange(changeKop, machineWallet, out change))
+                {
+                    foreach (var coin in sessionCoins)
+                    {
+                        if (coin.Value > 0)
+                        {
+                            machineWallet.TryRemove(coin.Key, coin.Value);
+                        }
+                    }
+                    return (false, "Невозможно выдать сдачу для этой операции");
+                }
+
+                foreach (var coin in change)
+                {
+                    machineWallet.TryRemove(coin.Key, coin.Value);
+                }
             }
 
             product.ConsumeOne();
 
-            foreach (var kv in change)
-                _machineWallet.TryRemove(kv.Key, kv.Value);
-
             ClearSession();
 
-            var msg = changeKop == 0 ? "Enjoy your product!" :
-                      $"Enjoy your product! Change: {DescribeCoins(change)} ({Money.Format(changeKop)})";
-            return (true, msg);
+            if (changeKop == 0)
+            {
+                return (true, "Наслаждайтесь покупкой!");
+            }
+            else
+            {
+                var changeDescription = DescribeCoins(change);
+                return (true, $"Наслаждайтесь покупкой! Сдача: {changeDescription} ({Money.Format(changeKop)})");
+            }
         }
 
         public (bool ok, string message) Cancel()
         {
-            var coins = _sessionWallet.Snapshot().Where(kv => kv.Value > 0)
-                .ToDictionary(k => k.Key, v => v.Value);
+            var coins = sessionWallet.Snapshot();
             var sum = CurrentBalanceKop;
             ClearSession();
-            var msg = coins.Count == 0 ? "Nothing to return" :
-                      $"Returned: {DescribeCoins(coins)} ({Money.Format(sum)})";
-            return (true, msg);
+
+            if (coins.Count == 0)
+            {
+                return (true, "Нечего возвращать");
+            }
+
+            var coinsDescription = DescribeCoins(coins);
+            return (true, $"Возвращено: {coinsDescription} ({Money.Format(sum)})");
         }
 
-        public bool TryEnterAdmin(string password) => password == _adminPassword;
+        public bool TryEnterAdmin(string password)
+        {
+            return password == adminPassword;
+        }
 
         public string AdminCollectAll()
         {
-            var total = _machineWallet.TotalKop();
-            foreach (var d in Money.SupportedCoins)
-                _machineWallet.TryRemove(d, _machineWallet.GetCount(d));
-            return $"Collected {Money.Format(total)}";
+            var total = machineWallet.TotalKop();
+            foreach (var coin in Money.SupportedCoins)
+            {
+                var count = machineWallet.GetCount(coin);
+                machineWallet.TryRemove(coin, count);
+            }
+            return $"Собрано {Money.Format(total)}";
         }
 
         public string AdminRestockProduct(int id, int amount)
         {
-            var product = _products.FirstOrDefault(p => p.Id == id);
-            if (product == null) return "Product not found";
+            Product? product = null;
+            foreach (var p in products)
+            {
+                if (p.Id == id)
+                {
+                    product = p;
+                    break;
+                }
+            }
+
+            if (product == null)
+                return "Товар не найден";
+
             product.AddStock(amount);
-            return $"Product '{product.Name}' stock is now {product.Quantity}";
+            return $"Товар '{product.Name}' теперь в количестве {product.Quantity}";
         }
 
         public string AdminLoadCoins(int denom, int count)
         {
-            if (!Money.IsSupportedCoin(denom)) return "Unsupported coin";
-            _machineWallet.Add(denom, count);
-            return $"Loaded {count} coin(s) of {Money.Format(denom)}";
+            if (!Money.IsSupportedCoin(denom))
+                return "Неподдерживаемая монета";
+
+            machineWallet.Add(denom, count);
+            return $"Загружено {count} монет(ы) номиналом {Money.Format(denom)}";
         }
 
         private void ClearSession()
         {
-            foreach (var d in Money.SupportedCoins)
+            foreach (var coin in Money.SupportedCoins)
             {
-                var c = _sessionWallet.GetCount(d);
-                if (c > 0) _sessionWallet.TryRemove(d, c);
+                var count = sessionWallet.GetCount(coin);
+                if (count > 0)
+                {
+                    sessionWallet.TryRemove(coin, count);
+                }
             }
         }
 
-        public static string DescribeCoins(IDictionary<int, int> coins)
+        private string DescribeCoins(Dictionary<int, int> coins)
         {
-            return string.Join(", ",
-                coins.Where(kv => kv.Value > 0)
-                     .OrderByDescending(kv => kv.Key)
-                     .Select(kv => $"{Money.Format(kv.Key)}x{kv.Value}"));
+            var descriptions = new List<string>();
+            foreach (var coin in coins)
+            {
+                if (coin.Value > 0)
+                {
+                    descriptions.Add($"{Money.Format(coin.Key)}x{coin.Value}");
+                }
+            }
+            return string.Join(", ", descriptions);
         }
     }
 }

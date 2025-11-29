@@ -1,6 +1,6 @@
 namespace VendingMachine.Core
 {
-    public sealed class Product
+    public class Product
     {
         public int Id { get; }
         public string Name { get; }
@@ -17,7 +17,14 @@ namespace VendingMachine.Core
 
         public bool HasStock => Quantity > 0;
 
-        public void AddStock(int amount) => Quantity += amount;
-        public void ConsumeOne() => Quantity--;
+        public void AddStock(int amount)
+        {
+            Quantity += amount;
+        }
+
+        public void ConsumeOne()
+        {
+            Quantity--;
+        }
     }
 }

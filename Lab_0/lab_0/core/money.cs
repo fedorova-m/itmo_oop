@@ -1,18 +1,25 @@
-using System.Globalization;
-
 namespace VendingMachine.Core
 {
     public static class Money
     {
         public const int Ruble = 100;
 
-        public static readonly int[] SupportedCoins = new[] { 100, 50, 20, 10 };
+        public static int[] SupportedCoins = new int[] { 100, 50, 20, 10 };
 
         public static string Format(int amountKop)
         {
-            return string.Format(CultureInfo.InvariantCulture, "{0:0.00} RUB", amountKop / 100.0);
+            double rubles = amountKop / 100.0;
+            return $"{rubles:F2} RUB";
         }
 
-        public static bool IsSupportedCoin(int kop) => Array.Exists(SupportedCoins, c => c == kop);
+        public static bool IsSupportedCoin(int kop)
+        {
+            foreach (var coin in SupportedCoins)
+            {
+                if (coin == kop)
+                    return true;
+            }
+            return false;
+        }
     }
 }

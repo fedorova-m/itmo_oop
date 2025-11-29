@@ -1,44 +1,72 @@
 namespace VendingMachine.Core
 {
-    public sealed class Wallet
+    public class Wallet
     {
-        private readonly Dictionary<int, int> _coins = new();
+        private Dictionary<int, int> coins;
 
         public Wallet()
         {
-            foreach (var d in Money.SupportedCoins)
-                _coins[d] = 0;
+            coins = new Dictionary<int, int>();
+            foreach (var coin in Money.SupportedCoins)
+            {
+                coins[coin] = 0;
+            }
         }
 
-        public Wallet(IDictionary<int, int> initial)
+        public Wallet(Dictionary<int, int> initial)
         {
-            foreach (var d in Money.SupportedCoins)
-                _coins[d] = initial.TryGetValue(d, out var c) ? c : 0;
+            coins = new Dictionary<int, int>();
+            foreach (var coin in Money.SupportedCoins)
+            {
+                if (initial.ContainsKey(coin))
+                {
+                    coins[coin] = initial[coin];
+                }
+                else
+                {
+                    coins[coin] = 0;
+                }
+            }
         }
 
-        public int GetCount(int denom) => _coins.TryGetValue(denom, out var c) ? c : 0;
+        public int GetCount(int denom)
+        {
+            if (coins.ContainsKey(denom))
+                return coins[denom];
+            return 0;
+        }
 
         public void Add(int denom, int count = 1)
         {
-            if (!_coins.ContainsKey(denom)) _coins[denom] = 0;
-            _coins[denom] += count;
+            if (!coins.ContainsKey(denom))
+            {
+                coins[denom] = 0;
+            }
+            coins[denom] += count;
         }
 
         public bool TryRemove(int denom, int count = 1)
         {
-            if (GetCount(denom) < count) return false;
-            _coins[denom] -= count;
+            if (GetCount(denom) < count)
+                return false;
+
+            coins[denom] -= count;
             return true;
         }
 
         public int TotalKop()
         {
-            var sum = 0;
-            foreach (var kv in _coins)
-                sum += kv.Key * kv.Value;
+            int sum = 0;
+            foreach (var coin in coins)
+            {
+                sum += coin.Key * coin.Value;
+            }
             return sum;
         }
 
-        public IReadOnlyDictionary<int, int> Snapshot() => _coins;
+        public Dictionary<int, int> Snapshot()
+        {
+            return new Dictionary<int, int>(coins);
+        }
     }
 }
