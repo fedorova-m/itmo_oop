@@ -20,12 +20,12 @@ namespace DeliverySystem.Patterns.AbstractFactory
             return order;
         }
 
-        public Order CreateCustomOrder(int id, string customerName, string specialInstructions)
+        public Order CreateScheduledOrder(int id, string customerName, string scheduledTime)
         {
-            var order = new CustomOrder();
+            var order = new ScheduledOrder();
             order.Id = id;
             order.CustomerName = customerName;
-            order.SpecialInstructions = specialInstructions;
+            order.ScheduledDeliveryTime = scheduledTime;
             return order;
         }
     }

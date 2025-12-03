@@ -48,24 +48,24 @@ namespace DeliverySystem.Tests
         public void Order_ShouldStartInPreparingState()
         {
             var order = new StandardOrder();
-            Assert.Equal("Подготовка", order.State.GetStateName());
+            Assert.Equal("Подготовка", order.GetState().GetStateName());
         }
 
         [Fact]
         public void Order_ShouldTransitionToDeliveringState()
         {
             var order = new StandardOrder();
-            order.State.Deliver(order);
-            Assert.Equal("Доставка", order.State.GetStateName());
+            order.GetState().Deliver(order);
+            Assert.Equal("Доставка", order.GetState().GetStateName());
         }
 
         [Fact]
         public void Order_ShouldTransitionToCompletedState()
         {
             var order = new StandardOrder();
-            order.State.Deliver(order);
-            order.State.Complete(order);
-            Assert.Equal("Выполнен", order.State.GetStateName());
+            order.GetState().Deliver(order);
+            order.GetState().Complete(order);
+            Assert.Equal("Выполнен", order.GetState().GetStateName());
         }
     }
 

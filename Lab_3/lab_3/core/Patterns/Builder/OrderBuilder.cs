@@ -7,7 +7,7 @@ namespace DeliverySystem.Patterns.Builder
     {
         private int _orderId;
         private string? _customerName;
-        private string? _orderType;
+        private string? _specialInstructions;
 
         public OrderBuilder SetId(int id)
         {
@@ -21,46 +21,32 @@ namespace DeliverySystem.Patterns.Builder
             return this;
         }
 
-        public OrderBuilder SetOrderType(string type)
+        public OrderBuilder SetSpecialInstructions(string instructions)
         {
-            _orderType = type;
+            _specialInstructions = instructions;
             return this;
         }
 
-        public Order Build()
+        public Order? Build()
         {
             if (string.IsNullOrEmpty(_customerName))
             {
-                throw new InvalidOperationException("Имя клиента не может быть пустым");
+                Console.WriteLine("Ошибка: Имя клиента не может быть пустым");
+                return null;
             }
 
             if (_orderId <= 0)
             {
-                throw new InvalidOperationException("ID заказа должен быть положительным числом");
+                Console.WriteLine("Ошибка: ID заказа должен быть положительным числом");
+                return null;
             }
 
-            Order order;
-            if (_orderType == "standard")
-            {
-                order = new StandardOrder();
-            }
-            else if (_orderType == "express")
-            {
-                order = new ExpressOrder();
-            }
-            else if (_orderType == "custom")
-            {
-                order = new CustomOrder();
-            }
-            else
-            {
-                throw new InvalidOperationException("Неизвестный тип заказа");
-            }
+                var customOrder = new CustomOrder();
+            customOrder.Id = _orderId;
+            customOrder.CustomerName = _customerName;
+                customOrder.SpecialInstructions = _specialInstructions;
 
-            order.Id = _orderId;
-            order.CustomerName = _customerName;
-
-            return order;
+            return customOrder;
         }
     }
 }

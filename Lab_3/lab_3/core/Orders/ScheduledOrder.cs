@@ -1,7 +1,10 @@
 namespace DeliverySystem.Orders
 {
-    public class StandardOrder : Order
+    public class ScheduledOrder : Order
     {
+        public string? ScheduledDeliveryTime { get; set; }
+        private const decimal SchedulingFee = 25m;
+
         public override decimal CalculateBasePrice()
         {
             decimal total = 0m;
@@ -9,12 +12,12 @@ namespace DeliverySystem.Orders
             {
                 total += item.GetTotalPrice();
             }
-            return total;
+            return total + SchedulingFee;
         }
 
         public override string GetOrderType()
         {
-            return "Стандартный";
+            return "К определенному времени";
         }
     }
 }

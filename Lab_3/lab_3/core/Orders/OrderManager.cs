@@ -8,6 +8,14 @@ namespace DeliverySystem.Orders
         private List<Order> _orders = new List<Order>();
         private OrderNotifier _notifier = new OrderNotifier();
 
+        public OrderManager()
+        {
+          
+            _notifier.Attach(new CustomerNotification());  
+            _notifier.Attach(new SMSNotification());       
+            _notifier.Attach(new EmailNotification());
+        }
+
         public void AddOrder(Order order)
         {
             _orders.Add(order);
@@ -36,7 +44,7 @@ namespace DeliverySystem.Orders
             var order = GetOrder(id);
             if (order != null)
             {
-                order.State.Process(order);
+                order.GetState().Process(order);
                 _notifier.Notify(order, "Заказ в процессе подготовки");
             }
         }
@@ -46,7 +54,7 @@ namespace DeliverySystem.Orders
             var order = GetOrder(id);
             if (order != null)
             {
-                order.State.Deliver(order);
+                order.GetState().Deliver(order);
                 _notifier.Notify(order, "Заказ отправлен на доставку");
             }
         }
@@ -56,7 +64,7 @@ namespace DeliverySystem.Orders
             var order = GetOrder(id);
             if (order != null)
             {
-                order.State.Complete(order);
+                order.GetState().Complete(order);
                 _notifier.Notify(order, "Заказ выполнен");
             }
         }
@@ -69,11 +77,6 @@ namespace DeliverySystem.Orders
                 return 0;
             }
             return strategy.CalculateFinalPrice(order);
-        }
-
-        public void SubscribeObserver(IOrderObserver observer)
-        {
-            _notifier.Attach(observer);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace DeliverySystem.Patterns.AbstractFactory
     {
         Order CreateStandardOrder(int id, string customerName);
         Order CreateExpressOrder(int id, string customerName);
-        Order CreateCustomOrder(int id, string customerName, string specialInstructions);
+        Order CreateScheduledOrder(int id, string customerName, string scheduledTime);
     }
 }
 

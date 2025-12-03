@@ -10,15 +10,14 @@ class Program
     static void Main()
     {
         var orderManager = new OrderManager();
-        orderManager.SubscribeObserver(new CustomerNotification());
 
-        Console.WriteLine("=== Система управления заказами ===\n");
+        Console.WriteLine("-- Система управления заказами --\n");
 
         var dish1 = new Dish(1, "Пицца Маргарита", 500, "Классическая пицца");
         var dish2 = new Dish(2, "Бургер", 350, "Сочный бургер");
         var dish3 = new Dish(3, "Салат Цезарь", 250, "Свежий салат");
 
-        Console.WriteLine("--- 1. Abstract Factory Pattern ---");
+        Console.WriteLine("--- 1. Abstract Factory Pattern (обычные заказы) ---");
         IOrderFactory factory = new OrderFactory();
         var order1 = factory.CreateStandardOrder(1, "Иван");
         order1.Items.Add(new OrderItem(dish1, 2));
@@ -29,21 +28,25 @@ class Program
         order2.Items.Add(new OrderItem(dish3, 3));
         orderManager.AddOrder(order2);
 
-        var order3 = factory.CreateCustomOrder(3, "Алексей", "Без лука");
-        order3.Items.Add(new OrderItem(dish1, 1));
-        order3.Items.Add(new OrderItem(dish3, 2));
-        orderManager.AddOrder(order3);
+        var order4 = factory.CreateScheduledOrder(4, "Петр", "18:30");
+        order4.Items.Add(new OrderItem(dish1, 1));
+        order4.Items.Add(new OrderItem(dish2, 2));
+        orderManager.AddOrder(order4);
         Console.WriteLine();
 
-        Console.WriteLine("--- 2. Builder Pattern ---");
-        var order4 = new OrderBuilder()
-            .SetId(4)
-            .SetCustomerName("Елена")
-            .SetOrderType("standard")
+        Console.WriteLine("--- 2. Builder Pattern (персональный заказ) ---");
+        var order3 = new OrderBuilder()
+            .SetId(3)
+            .SetCustomerName("Алексей")
+            .SetSpecialInstructions("В бургер не добавлять лук. Двойная порция сыра в пиццу. Салат без сухариков.")
             .Build();
-        order4.Items.Add(new OrderItem(dish2, 2));
-        order4.Items.Add(new OrderItem(dish3, 1));
-        orderManager.AddOrder(order4);
+        if (order3 != null)
+        {
+            order3.Items.Add(new OrderItem(dish2, 1));
+            order3.Items.Add(new OrderItem(dish1, 1));
+            order3.Items.Add(new OrderItem(dish3, 1));
+            orderManager.AddOrder(order3);
+        }
         Console.WriteLine();
 
         Console.WriteLine("--- 3. State Pattern ---");
@@ -71,7 +74,12 @@ class Program
         Console.WriteLine("--- Все заказы ---");
         foreach (var order in orderManager.GetAllOrders())
         {
-            Console.WriteLine($"Заказ {order.Id}: {order.GetOrderType()}, {order.CustomerName}, {order.State.GetStateName()}");
+            string orderInfo = $"Заказ {order.Id}: {order.GetOrderType()}, {order.CustomerName}, {order.GetState().GetStateName()}";
+            if (order is ScheduledOrder scheduledOrder && !string.IsNullOrEmpty(scheduledOrder.ScheduledDeliveryTime))
+            {
+                orderInfo += $", доставка: {scheduledOrder.ScheduledDeliveryTime}";
+            }
+            Console.WriteLine(orderInfo);
         }
     }
 }

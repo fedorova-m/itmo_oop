@@ -16,9 +16,9 @@ namespace DeliverySystem.Orders
             _state = new PreparingState();
         }
 
-        public IOrderState State
+        public IOrderState GetState()
         {
-            get => _state;
+            return _state;
         }
 
         public void ChangeState(IOrderState newState)

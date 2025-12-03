@@ -7,7 +7,7 @@ namespace DeliverySystem.Orders
 
         public override decimal CalculateBasePrice()
         {
-            decimal total = 0;
+            decimal total = 0m;
             foreach (var item in Items)
             {
                 total += item.GetTotalPrice();
