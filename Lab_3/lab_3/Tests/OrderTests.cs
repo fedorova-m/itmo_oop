@@ -108,30 +108,34 @@ namespace DeliverySystem.Tests
     public class BuilderTests
     {
         [Fact]
-        public void OrderBuilder_ShouldBuildStandardOrder()
+        public void OrderBuilder_ShouldBuildCustomOrder()
         {
             var order = new OrderBuilder()
                 .SetId(1)
                 .SetCustomerName("Иван")
-                .SetOrderType("standard")
+                .SetSpecialInstructions("Без лука")
                 .Build();
 
+            Assert.NotNull(order);
             Assert.Equal(1, order.Id);
             Assert.Equal("Иван", order.CustomerName);
-            Assert.Equal("Стандартный", order.GetOrderType());
+            Assert.Equal("Персональный", order.GetOrderType());
+            if (order is CustomOrder customOrder)
+            {
+                Assert.Equal("Без лука", customOrder.SpecialInstructions);
+            }
         }
 
         [Fact]
-        public void OrderBuilder_ShouldThrowOnEmptyName()
+        public void OrderBuilder_ShouldReturnNullOnEmptyName()
         {
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                new OrderBuilder()
-                    .SetId(1)
-                    .SetCustomerName("")
-                    .SetOrderType("standard")
-                    .Build();
-            });
+            var order = new OrderBuilder()
+                .SetId(1)
+                .SetCustomerName("")
+                .SetSpecialInstructions("Инструкции")
+                .Build();
+
+            Assert.Null(order);
         }
     }
 
@@ -158,15 +162,15 @@ namespace DeliverySystem.Tests
         }
 
         [Fact]
-        public void OrderFactory_ShouldCreateCustomOrder()
+        public void OrderFactory_ShouldCreateScheduledOrder()
         {
             IOrderFactory factory = new OrderFactory();
-            var order = factory.CreateCustomOrder(3, "Алексей", "Без лука");
+            var order = factory.CreateScheduledOrder(3, "Алексей", "18:30");
 
-            Assert.Equal("Персональный", order.GetOrderType());
-            if (order is CustomOrder customOrder)
+            Assert.Equal("К определенному времени", order.GetOrderType());
+            if (order is ScheduledOrder scheduledOrder)
             {
-                Assert.Equal("Без лука", customOrder.SpecialInstructions);
+                Assert.Equal("18:30", scheduledOrder.ScheduledDeliveryTime);
             }
         }
     }
